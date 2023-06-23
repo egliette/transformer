@@ -7,14 +7,14 @@ from torch import nn, optim
 from torch.optim import Adam
 from torch.utils.data import DataLoader
 
-import data_utils
-import model_utils
+import utils.data_utils as data_utils
+import utils.model_utils as model_utils
 from dataset import ParallelDataset
 from vocabulary import Vocabulary, ParallelVocabulary
 from tokenizer import EnTokenizer, ViTokenizer
 from models.model.transformer import Transformer
-from util.bleu import idx_to_word, get_bleu
-from util.epoch_timer import epoch_time
+from utils.bleu import idx_to_word, get_bleu
+from utils.epoch_timer import epoch_time
 
 
 

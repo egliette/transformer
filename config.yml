@@ -1,12 +1,12 @@
 path:
     src:
-        train: "/content/EnVi_NMT/en-vi/train.tags.en-vi.clean.en"
-        valid: "/content/EnVi_NMT/en-vi/valid.en"
-        test: "/content/EnVi_NMT/en-vi/test.en"
+        train: "dataset/train.en"
+        valid: "dataset/valid.en"
+        test: "dataset/test.en"
     tgt:
-        train: "/content/EnVi_NMT/en-vi/train.tags.en-vi.clean.vi"
-        valid: "/content/EnVi_NMT/en-vi/valid.vi"
-        test: "/content/EnVi_NMT/en-vi/test.vi"
+        train: "dataset/train.vi"
+        valid: "dataset/valid.vi"
+        test: "dataset/test.vi"
 
 
 batch_size: 32
