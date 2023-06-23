@@ -1,32 +1,80 @@
-"""
-@author : Hyunwoong
-@when : 2019-10-22
-@homepage : https://github.com/gusdnd852
-"""
 import math
 import time
 
+from tqdm import tqdm
+import torch
 from torch import nn, optim
 from torch.optim import Adam
+from torch.utils.data import DataLoader
 
-from data import *
+import data_utils
+import model_utils
+from dataset import ParallelDataset
+from vocabulary import Vocabulary, ParallelVocabulary
+from tokenizer import EnTokenizer, ViTokenizer
 from models.model.transformer import Transformer
 from util.bleu import idx_to_word, get_bleu
 from util.epoch_timer import epoch_time
 
 
-def count_parameters(model):
-    return sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+# Load config file
+config = data_utils.get_config("config.yml")
+
+for key, value in config.items():
+    globals()[key] = value
 
 
-def initialize_weights(m):
-    if hasattr(m, 'weight') and m.weight.dim() > 1:
-        nn.init.kaiming_uniform(m.weight.data)
+# Load datasets
+train_set = ParallelDataset(path["src"]["train"],
+                            path["tgt"]["train"])
+valid_set = ParallelDataset(path["src"]["valid"],
+                            path["tgt"]["valid"])
+test_set = ParallelDataset(path["src"]["test"],
+                           path["tgt"]["test"])
+
+corpus = train_set
 
 
-model = Transformer(src_pad_idx=src_pad_idx,
-                    trg_pad_idx=trg_pad_idx,
-                    trg_sos_idx=trg_sos_idx,
+# Load tokenizers
+en_tok = EnTokenizer()
+en_vocab = Vocabulary(en_tok)
+en_corpus = [src for (src, tgt) in corpus]
+en_vocab.add_words_from_corpus(en_corpus)
+
+vi_tok = ViTokenizer()
+vi_vocab = Vocabulary(vi_tok)
+vi_corpus = [tgt for (src, tgt) in corpus]
+vi_vocab.add_words_from_corpus(vi_corpus)
+
+envi_vocab = ParallelVocabulary(en_vocab, vi_vocab)
+
+
+# Load dataloaders
+train_loader = DataLoader(train_set,
+                          batch_size=batch_size,
+                          shuffle=True,
+                          collate_fn=lambda example: data_utils.collate_fn(envi_vocab, example))
+valid_loader = DataLoader(valid_set,
+                          batch_size=batch_size,
+                          shuffle=True,
+                          collate_fn=lambda example: data_utils.collate_fn(envi_vocab, example))
+test_loader = DataLoader(test_set,
+                          batch_size=batch_size,
+                          shuffle=False,
+                          collate_fn=lambda example: data_utils.collate_fn(envi_vocab, example))
+
+
+# Load model
+inf = float("inf")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+enc_voc_size = len(envi_vocab.src)
+dec_voc_size = len(envi_vocab.tgt)
+
+model = Transformer(src_pad_idx=envi_vocab.src.pad_id,
+                    trg_pad_idx=envi_vocab.tgt.pad_id,
+                    trg_sos_idx=envi_vocab.tgt.bos_id,
                     d_model=d_model,
                     enc_voc_size=enc_voc_size,
                     dec_voc_size=dec_voc_size,
@@ -37,8 +85,9 @@ model = Transformer(src_pad_idx=src_pad_idx,
                     drop_prob=drop_prob,
                     device=device).to(device)
 
-print(f'The model has {count_parameters(model):,} trainable parameters')
-model.apply(initialize_weights)
+
+print(f'The model has {model_utils.count_parameters(model):,} trainable parameters')
+model.apply(model_utils.initialize_weights)
 optimizer = Adam(params=model.parameters(),
                  lr=init_lr,
                  weight_decay=weight_decay,
@@ -49,57 +98,67 @@ scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer=optimizer,
                                                  factor=factor,
                                                  patience=patience)
 
-criterion = nn.CrossEntropyLoss(ignore_index=src_pad_idx)
+criterion = nn.CrossEntropyLoss(ignore_index=envi_vocab.src.pad_id)
 
 
-def train(model, iterator, optimizer, criterion, clip):
+def train(model, iterator, optimizer, criterion, clip, batch_id):
     model.train()
     epoch_loss = 0
-    for i, batch in enumerate(iterator):
-        src = batch.src
-        trg = batch.trg
 
-        optimizer.zero_grad()
-        output = model(src, trg[:, :-1])
-        output_reshape = output.contiguous().view(-1, output.shape[-1])
-        trg = trg[:, 1:].contiguous().view(-1)
+    with tqdm(enumerate(iterator), total=len(iterator)) as pbar:
+        pbar.set_description(f"Epoch {batch_id}: ")
+        for i, batch in pbar:
+            src = batch["src"].to(device)
+            trg = batch["tgt"].to(device)
 
-        loss = criterion(output_reshape, trg)
-        loss.backward()
-        torch.nn.utils.clip_grad_norm_(model.parameters(), clip)
-        optimizer.step()
+            optimizer.zero_grad()
+            output = model(src, trg[:, :-1])
+            output_reshape = output.contiguous().view(-1, output.shape[-1])
+            trg = trg[:, 1:].contiguous().view(-1)
 
-        epoch_loss += loss.item()
-        print('step :', round((i / len(iterator)) * 100, 2), '% , loss :', loss.item())
+            loss = criterion(output_reshape, trg)
+            loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), clip)
+            optimizer.step()
+
+            epoch_loss += loss.item()
+            pbar.set_postfix({"loss": loss.item()})
 
     return epoch_loss / len(iterator)
 
 
-def evaluate(model, iterator, criterion):
+def idx_to_word_new(x, vocab):
+    words = []
+    for i in x:
+        word = vocab.id2word[i.item()]
+        if '<' not in word:
+            words.append(word)
+    words = " ".join(words)
+    return words
+
+
+def evaluate(model, iterator, criterion, parallel_vocab):
     model.eval()
     epoch_loss = 0
     batch_bleu = []
     with torch.no_grad():
         for i, batch in enumerate(iterator):
-            src = batch.src
-            trg = batch.trg
+            src = batch["src"].to(device)
+            trg = batch["tgt"].to(device)
             output = model(src, trg[:, :-1])
             output_reshape = output.contiguous().view(-1, output.shape[-1])
             trg = trg[:, 1:].contiguous().view(-1)
 
             loss = criterion(output_reshape, trg)
             epoch_loss += loss.item()
-
             total_bleu = []
-            for j in range(batch_size):
-                try:
-                    trg_words = idx_to_word(batch.trg[j], loader.target.vocab)
-                    output_words = output[j].max(dim=1)[1]
-                    output_words = idx_to_word(output_words, loader.target.vocab)
-                    bleu = get_bleu(hypotheses=output_words.split(), reference=trg_words.split())
-                    total_bleu.append(bleu)
-                except:
-                    pass
+            for j in range(len(batch)):
+                  trg_words = idx_to_word(batch["tgt"].to(device)[j], parallel_vocab.tgt)
+                  output_words = output[j].max(dim=1)[1]
+                  output_words = idx_to_word(output_words, parallel_vocab.tgt)
+                  bleu = get_bleu(hypotheses=output_words.split(), reference=trg_words.split())
+                  total_bleu.append(bleu)
+
 
             total_bleu = sum(total_bleu) / len(total_bleu)
             batch_bleu.append(total_bleu)
@@ -112,8 +171,8 @@ def run(total_epoch, best_loss):
     train_losses, test_losses, bleus = [], [], []
     for step in range(total_epoch):
         start_time = time.time()
-        train_loss = train(model, train_iter, optimizer, criterion, clip)
-        valid_loss, bleu = evaluate(model, valid_iter, criterion)
+        train_loss = train(model, train_loader, optimizer, criterion, clip, step+1)
+        valid_loss, bleu = evaluate(model, valid_loader, criterion, envi_vocab)
         end_time = time.time()
 
         if step > warmup:

@@ -9,9 +9,8 @@ from collections import Counter
 
 import numpy as np
 
-from data import *
 from models.model.transformer import Transformer
-from util.bleu import get_bleu, idx_to_word
+from utils.bleu import get_bleu, idx_to_word
 
 
 def count_parameters(model):
