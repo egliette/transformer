@@ -126,17 +126,6 @@ def train(model, iterator, optimizer, criterion, clip, batch_id):
 
     return epoch_loss / len(iterator)
 
-
-def idx_to_word_new(x, vocab):
-    words = []
-    for i in x:
-        word = vocab.id2word[i.item()]
-        if '<' not in word:
-            words.append(word)
-    words = " ".join(words)
-    return words
-
-
 def evaluate(model, iterator, criterion, parallel_vocab):
     model.eval()
     epoch_loss = 0

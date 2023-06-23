@@ -49,7 +49,7 @@ def get_bleu(hypotheses, reference):
 def idx_to_word(x, vocab):
     words = []
     for i in x:
-        word = vocab.itos[i]
+        word = vocab.id2word[i.item()]
         if '<' not in word:
             words.append(word)
     words = " ".join(words)
