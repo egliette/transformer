@@ -30,8 +30,6 @@ train_set = ParallelDataset(path["src"]["train"],
                             path["tgt"]["train"])
 valid_set = ParallelDataset(path["src"]["valid"],
                             path["tgt"]["valid"])
-test_set = ParallelDataset(path["src"]["test"],
-                           path["tgt"]["test"])
 
 corpus = train_set
 
@@ -58,10 +56,6 @@ train_loader = DataLoader(train_set,
 valid_loader = DataLoader(valid_set,
                           batch_size=batch_size,
                           shuffle=True,
-                          collate_fn=lambda example: data_utils.collate_fn(envi_vocab, example))
-test_loader = DataLoader(test_set,
-                          batch_size=batch_size,
-                          shuffle=False,
                           collate_fn=lambda example: data_utils.collate_fn(envi_vocab, example))
 
 
@@ -142,7 +136,7 @@ def evaluate(model, iterator, criterion, parallel_vocab):
             epoch_loss += loss.item()
             total_bleu = []
             for j in range(batch["tgt"].shape[0]):
-                  trg_words = idx_to_word(batch["tgt"].to(device)[j], parallel_vocab.tgt)
+                  trg_words = idx_to_word(trg[j], parallel_vocab.tgt)
                   output_words = output[j].max(dim=1)[1]
                   output_words = idx_to_word(output_words, parallel_vocab.tgt)
                   bleu = get_bleu(hypotheses=output_words.split(), reference=trg_words.split())
