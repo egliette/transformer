@@ -7,7 +7,7 @@ from torch.optim import Adam
 
 from models.model.transformer import Transformer
 from utils.bleu import idx_to_word, get_bleu
-from utils.epoch_timer import epoch_time
+from utils.utils import epoch_time
 
 
 def load_record(path):

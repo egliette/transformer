@@ -10,7 +10,7 @@ path:
 
 
 batch_size: 32
-epoch: 1
+epoch: 50
 clip: 1.0
 warmup: 100
 

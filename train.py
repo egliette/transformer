@@ -14,7 +14,7 @@ from vocabulary import Vocabulary, ParallelVocabulary
 from tokenizer import EnTokenizer, ViTokenizer
 from models.model.transformer import Transformer
 from utils.bleu import idx_to_word, get_bleu
-from utils.epoch_timer import epoch_time
+from utils.utils import epoch_time, create_dir
 
 
 
@@ -141,7 +141,7 @@ def evaluate(model, iterator, criterion, parallel_vocab):
             loss = criterion(output_reshape, trg)
             epoch_loss += loss.item()
             total_bleu = []
-            for j in range(len(batch)):
+            for j in range(batch["tgt"].shape[0]):
                   trg_words = idx_to_word(batch["tgt"].to(device)[j], parallel_vocab.tgt)
                   output_words = output[j].max(dim=1)[1]
                   output_words = idx_to_word(output_words, parallel_vocab.tgt)
@@ -157,6 +157,9 @@ def evaluate(model, iterator, criterion, parallel_vocab):
 
 
 def run(total_epoch, best_loss):
+    create_dir("saved")
+    create_dir("result")
+
     train_losses, test_losses, bleus = [], [], []
     for step in range(total_epoch):
         start_time = time.time()

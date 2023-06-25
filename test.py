@@ -1,9 +1,3 @@
-"""
-@author : Hyunwoong
-@when : 2019-12-19
-@homepage : https://github.com/gusdnd852
-"""
-
 import math
 from collections import Counter
 
@@ -35,6 +29,7 @@ print(f'The model has {count_parameters(model):,} trainable parameters')
 
 def test_model(num_examples):
     iterator = test_iter
+
     model.load_state_dict(torch.load("./saved/model-saved.pt"))
 
     with torch.no_grad():
