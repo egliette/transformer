@@ -136,7 +136,7 @@ def evaluate(model, iterator, criterion, parallel_vocab):
             epoch_loss += loss.item()
             total_bleu = []
             for j in range(batch["tgt"].shape[0]):
-                  trg_words = idx_to_word(trg[j], parallel_vocab.tgt)
+                  trg_words = idx_to_word(batch["tgt"].to(device)[j], parallel_vocab.tgt)
                   output_words = output[j].max(dim=1)[1]
                   output_words = idx_to_word(output_words, parallel_vocab.tgt)
                   bleu = get_bleu(hypotheses=output_words.split(), reference=trg_words.split())
