@@ -1,10 +1,6 @@
 import torch 
-from torch.utils.data import DataLoader
 
 from models.model.transformer import Transformer
-from dataset import ParallelDataset
-from vocabulary import Vocabulary, ParallelVocabulary
-from tokenizer import EnTokenizer, ViTokenizer
 import utils
 import utils.data_utils as data_utils
 import utils.model_utils as model_utils
@@ -18,34 +14,9 @@ for key, value in config.items():
     globals()[key] = value
 
 
-# Load datasets
-train_set = ParallelDataset(path["src"]["train"],
-                            path["tgt"]["train"])
-test_set = ParallelDataset(path["src"]["test"],
-                           path["tgt"]["test"])
-
-corpus = train_set
-
-
-# Load tokenizers
-en_tok = EnTokenizer()
-en_vocab = Vocabulary(en_tok)
-en_corpus = [src for (src, tgt) in corpus]
-en_vocab.add_words_from_corpus(en_corpus)
-
-vi_tok = ViTokenizer()
-vi_vocab = Vocabulary(vi_tok)
-vi_corpus = [tgt for (src, tgt) in corpus]
-vi_vocab.add_words_from_corpus(vi_corpus)
-
-envi_vocab = ParallelVocabulary(en_vocab, vi_vocab)
-
-
-# Load dataloader
-test_loader = DataLoader(test_set,
-                          batch_size=batch_size,
-                          shuffle=False,
-                          collate_fn=lambda example: data_utils.collate_fn(envi_vocab, example))
+envi_vocab = torch.load(path["parallel_vocab"])
+dataloaders = torch.load(path["dataloaders"])
+test_loader = dataloaders["test_loader"]
 
 
 # Load model

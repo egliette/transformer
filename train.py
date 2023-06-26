@@ -5,17 +5,12 @@ from tqdm import tqdm
 import torch
 from torch import nn, optim
 from torch.optim import Adam
-from torch.utils.data import DataLoader
 
 import utils.data_utils as data_utils
 import utils.model_utils as model_utils
-from dataset import ParallelDataset
-from vocabulary import Vocabulary, ParallelVocabulary
-from tokenizer import EnTokenizer, ViTokenizer
 from models.model.transformer import Transformer
 from utils.bleu import idx_to_word, get_bleu
 from utils.utils import epoch_time, create_dir
-
 
 
 # Load config file
@@ -25,39 +20,10 @@ for key, value in config.items():
     globals()[key] = value
 
 
-# Load datasets
-train_set = ParallelDataset(path["src"]["train"],
-                            path["tgt"]["train"])
-valid_set = ParallelDataset(path["src"]["valid"],
-                            path["tgt"]["valid"])
-
-corpus = train_set
-
-
-# Load tokenizers
-en_tok = EnTokenizer()
-en_vocab = Vocabulary(en_tok)
-en_corpus = [src for (src, tgt) in corpus]
-en_vocab.add_words_from_corpus(en_corpus)
-
-vi_tok = ViTokenizer()
-vi_vocab = Vocabulary(vi_tok)
-vi_corpus = [tgt for (src, tgt) in corpus]
-vi_vocab.add_words_from_corpus(vi_corpus)
-
-envi_vocab = ParallelVocabulary(en_vocab, vi_vocab)
-
-
-# Load dataloaders
-train_loader = DataLoader(train_set,
-                          batch_size=batch_size,
-                          shuffle=True,
-                          collate_fn=lambda example: data_utils.collate_fn(envi_vocab, example))
-valid_loader = DataLoader(valid_set,
-                          batch_size=batch_size,
-                          shuffle=True,
-                          collate_fn=lambda example: data_utils.collate_fn(envi_vocab, example))
-
+envi_vocab = torch.load(path["parallel_vocab"])
+dataloaders = torch.load(path["dataloaders"])
+train_loader = dataloaders["train_loader"]
+valid_loader = dataloaders["valid_loader"]
 
 # Load model
 inf = float("inf")

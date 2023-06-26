@@ -7,17 +7,19 @@ path:
         train: "dataset/train.vi"
         valid: "dataset/valid.vi"
         test: "dataset/test.vi"
+    parallel_vocab: "parallel_vocab.pt"
+    dataloaders: "dataloaders.pt"
 
 
 batch_size: 32
-epoch: 50
+epoch: 1
+
 clip: 1.0
 warmup: 100
 
 init_lr: !!float 1e-5
 weight_decay: !!float 5e-4
 adam_eps: !!float 5e-9
-
 factor: 0.9
 patience: 10
 

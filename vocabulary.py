@@ -4,6 +4,7 @@ from collections import Counter
 import torch
 from tqdm import tqdm
 
+from utils.data_utils import pad_tensor
 
 class Vocabulary:
     """ The Vocabulary class heavily inspired by machine translation exercise of
@@ -96,12 +97,21 @@ class Vocabulary:
 
         return corpus
 
-    def add_words_from_corpus(self, corpus, is_tokenized=False, min_freq=1):
+    def add_words_from_corpus(self, corpus=None, corpus_fpath=None,
+                              is_tokenized=False, min_freq=1):
         print("Add tokens from the corpus...")
+
+        if corpus_fpath is not None:
+            corpus = list()
+            with open(corpus_fpath, "r", encoding="utf-8") as f:
+                for line in f:
+                    corpus.append(line.rstrip("\n"))
+
         if is_tokenized:
             tokenized_corpus = corpus
         else:
             tokenized_corpus = self.tokenize_corpus(corpus)
+
         word_freq = Counter(chain(*tokenized_corpus))
         non_singletons = [w for w in word_freq if word_freq[w] >= min_freq]
         print(f"Number of tokens in the corpus: {len(word_freq)}")
@@ -133,3 +143,12 @@ class ParallelVocabulary:
             return self.src.tensor_to_corpus(tensor)
         else:
             return self.tgt.tensor_to_corpus(tensor)
+
+    def collate_fn(self, examples):
+        src_sents = [pair["src"] for pair in examples]
+        processed_src = self.corpus_to_tensor(src_sents, is_tokenized=True)
+        tgt_sents = [pair["tgt"] for pair in examples]
+        processed_tgt = self.corpus_to_tensor(tgt_sents, is_tokenized=True, is_source=False)
+
+        return {"src": pad_tensor(processed_src, self.src.pad_id),
+                "tgt": pad_tensor(processed_tgt, self.tgt.pad_id)}
