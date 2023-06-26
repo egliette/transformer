@@ -1,7 +1,6 @@
-import torch 
+import torch
 
 from models.model.transformer import Transformer
-import utils
 import utils.data_utils as data_utils
 import utils.model_utils as model_utils
 from utils.bleu import get_bleu, idx_to_word
@@ -13,6 +12,7 @@ config = data_utils.get_config("config.yml")
 for key, value in config.items():
     globals()[key] = value
 
+checkpoint_fpath = "/".join([checkpoint["dir"], checkpoint["name"]])
 
 envi_vocab = torch.load(path["parallel_vocab"])
 dataloaders = torch.load(path["dataloaders"])
@@ -38,13 +38,14 @@ model = Transformer(src_pad_idx=envi_vocab.src.pad_id,
                     drop_prob=0.00,
                     device=device).to(device)
 
+checkpoint_dict = torch.load(checkpoint_fpath)
+model.load_state_dict(checkpoint_dict["model_state_dict"])
+
 print(f'The model has {model_utils.count_parameters(model):,} trainable parameters')
 
 
 def test_model(parallel_vocab):
     iterator = test_loader
-
-    model.load_state_dict(torch.load("./saved/model-saved.pt"))
 
     with torch.no_grad():
         batch_bleu = []
@@ -57,7 +58,7 @@ def test_model(parallel_vocab):
             for j in range(batch["tgt"].shape[0]):
                 src_words = idx_to_word(src[j], parallel_vocab.src)
                 trg_words = idx_to_word(trg[j], parallel_vocab.tgt)
-          
+
                 output_words = output[j].max(dim=1)[1]
                 output_words = idx_to_word(output_words, parallel_vocab.tgt)
 

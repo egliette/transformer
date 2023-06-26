@@ -3,16 +3,23 @@ path:
         train: "dataset/train.en"
         valid: "dataset/valid.en"
         test: "dataset/test.en"
+
     tgt:
         train: "dataset/train.vi"
         valid: "dataset/valid.vi"
         test: "dataset/test.vi"
+
     parallel_vocab: "parallel_vocab.pt"
     dataloaders: "dataloaders.pt"
+    result: "result"
+
+checkpoint:
+    dir: "saved"
+    name: "checkpoint_best.pt"
 
 
 batch_size: 32
-epoch: 1
+total_epoch: 5
 
 clip: 1.0
 warmup: 100
