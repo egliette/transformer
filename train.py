@@ -37,7 +37,6 @@ def train(model, iterator, optimizer, criterion, clip, batch_id):
 
             epoch_loss += loss.item()
             pbar.set_postfix({"loss": loss.item()})
-            break
 
     return epoch_loss / len(iterator)
 
