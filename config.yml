@@ -9,17 +9,16 @@ path:
         valid: "dataset/valid.vi"
         test: "dataset/test.vi"
 
-    parallel_vocab: "parallel_vocab.pt"
-    dataloaders: "dataloaders.pt"
-    result: "result"
-
 checkpoint:
-    dir: "saved"
+    dir: "/content/gdrive/MyDrive/saved"
     name: "checkpoint_best.pt"
+    results: "results.csv"
+    parallel_vocab: "parallel_vocab.pt" 
+    dataloaders: "dataloaders.pt"
 
 
 batch_size: 32
-total_epoch: 5
+total_epoch: 3
 
 clip: 1.0
 warmup: 100

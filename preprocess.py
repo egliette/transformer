@@ -1,10 +1,12 @@
 import torch
 from torch.utils.data import DataLoader
 
-import utils.data_utils as data_utils
 from dataset import ParallelDataset
 from tokenizer import EnTokenizer, ViTokenizer
 from vocabulary import Vocabulary, ParallelVocabulary
+import utils.data_utils as data_utils
+from utils.utils import create_dir
+
 
 
 # Load config file
@@ -14,7 +16,7 @@ for key, value in config.items():
     globals()[key] = value
 
 
-# Load tokenizers
+# Create parallel vocabulary
 en_tok = EnTokenizer()
 en_vocab = Vocabulary(en_tok)
 en_vocab.add_words_from_corpus(corpus_fpath=path["src"]["train"])
@@ -52,5 +54,10 @@ dataloaders = {"train_loader": train_loader,
                "valid_loader": valid_loader,
                "test_loader": test_loader,}
 
-torch.save(envi_vocab, path["parallel_vocab"])
-torch.save(dataloaders, path["dataloaders"])
+# Save vocab and dataloaders
+create_dir(checkpoint["dir"])
+vocab_fpath = "/".join([checkpoint["dir"], checkpoint["parallel_vocab"]])
+dataloaders_fpath = "/".join([checkpoint["dir"], checkpoint["dataloaders"]])
+
+torch.save(envi_vocab, vocab_fpath)
+torch.save(dataloaders, dataloaders_fpath)
