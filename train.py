@@ -1,11 +1,9 @@
 import math
-import time
-import os
 
 import pandas as pd
 import torch
 from torch import nn, optim
-import torch.optim.Adam as Adam
+from torch.optim import Adam
 
 import utils.data_utils as data_utils
 import utils.model_utils as model_utils
@@ -66,10 +64,10 @@ scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer=optimizer,
 criterion = nn.CrossEntropyLoss(ignore_index=envi_vocab.src.pad_id)
 
 
-# Load checkpoint
+print("Load checkpoint...")
 begin_epoch = 1
 best_loss = float("inf")
-if os.path.isfile(checkpoint_fpath):
+if other_utils.exist(checkpoint_fpath):
     checkpoint_dict = torch.load(checkpoint_fpath)
     best_loss = checkpoint_dict["loss"]
     begin_epoch = checkpoint_dict["epoch"] + 1
@@ -78,30 +76,29 @@ if os.path.isfile(checkpoint_fpath):
     if begin_epoch <= total_epoch:
         print(f"Continue from epoch {begin_epoch}...")
 else:
+    print(f"Checkpoint is not found, continue from epoch 1...")
     model.apply(model_utils.initialize_weights)
 
 print(f"The model has {model_utils.count_parameters(model):,} trainable parameters")
 
 columns = ["epoch", "train_loss", "valid_loss", "valid_BLEU"]
 results_df = pd.DataFrame(columns=columns)
-if os.path.isfile(results_fpath):
+if other_utils.exist(results_fpath):
     results_df = pd.read_csv(results_fpath)
 
 
 print(f"Start training & evaluating...")
 for epoch in range(begin_epoch, total_epoch+1):
-    start_time = time.time()
-    train_loss = model_utils.train(model, train_loader, optimizer, criterion, clip, epoch)
-    valid_loss, valid_BLEU = model_utils.evaluate(model, valid_loader, criterion, envi_vocab)
-    end_time = time.time()
+    with other_utils.TimeContextManager() as timer:
+        train_loss = model_utils.train(model, train_loader, optimizer, criterion, clip, epoch)
+        valid_loss, valid_BLEU = model_utils.evaluate(model, valid_loader, criterion, envi_vocab)
+        epoch_mins, epoch_secs = timer.get_time()
 
     if epoch > warmup:
         scheduler.epoch(valid_loss)
 
     results_df.loc[len(results_df), columns] = epoch, train_loss, valid_loss, valid_BLEU
     results_df.to_csv(results_fpath, index=False)
-
-    epoch_mins, epoch_secs = other_utils.epoch_time(start_time, end_time)
 
     if valid_loss < best_loss:
         best_loss = valid_loss
@@ -111,9 +108,9 @@ for epoch in range(begin_epoch, total_epoch+1):
                     "optimizer_state_dict": optimizer.state_dict()},
                     checkpoint_fpath)
 
-    print(f'Epoch: {epoch} | Time: {epoch_mins}m {epoch_secs}s')
-    print(f'\tTrain Loss: {train_loss:.3f} | Train PPL: {math.exp(train_loss):7.3f}')
-    print(f'\tVal Loss: {valid_loss:.3f} |  Val PPL: {math.exp(valid_loss):7.3f}')
-    print(f'\tBLEU Score: {valid_BLEU:.3f}')
+    print(f"Epoch: {epoch} | Time: {epoch_mins}m {epoch_secs}s")
+    print(f"\tTrain Loss: {train_loss:.3f} | Train PPL: {math.exp(train_loss):7.3f}")
+    print(f"\tVal Loss: {valid_loss:.3f} |  Val PPL: {math.exp(valid_loss):7.3f}")
+    print(f"\tBLEU Score: {valid_BLEU:.3f}")
 
 print("Finish training!")

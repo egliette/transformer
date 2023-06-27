@@ -5,7 +5,6 @@ import utils.model_utils as model_utils
 from models.model.transformer import Transformer
 
 
-
 print("Load config file...")
 config = data_utils.get_config("config.yml")
 
@@ -47,7 +46,7 @@ print("Load checkpoint...")
 checkpoint_dict = torch.load(checkpoint_fpath)
 model.load_state_dict(checkpoint_dict["model_state_dict"])
 
-print(f'The model has {model_utils.count_parameters(model):,} trainable parameters')
+print(f"The model has {model_utils.count_parameters(model):,} trainable parameters")
 
 
 print("Start testing...")

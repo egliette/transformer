@@ -10,7 +10,7 @@ path:
         test: "dataset/test.vi"
 
 checkpoint:
-    dir: "/content/gdrive/MyDrive/saved"
+    dir: "checkpoint"
     name: "checkpoint_best.pt"
     results: "results.csv"
     parallel_vocab: "parallel_vocab.pt" 
