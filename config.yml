@@ -1,13 +1,13 @@
 path:
     src:
-        train: "dataset/train.en"
-        valid: "dataset/valid.en"
-        test: "dataset/test.en"
+        train: "parallel_corpora/train.en"
+        valid: "parallel_corpora/valid.en"
+        test: "parallel_corpora/test.en"
 
     tgt:
-        train: "dataset/train.vi"
-        valid: "dataset/valid.vi"
-        test: "dataset/test.vi"
+        train: "parallel_corpora/train.vi"
+        valid: "parallel_corpora/valid.vi"
+        test: "parallel_corpora/test.vi"
 
 checkpoint:
     dir: "checkpoint"

@@ -1,6 +1,6 @@
-echo "--PREPROCESSING--"
+echo "---PREPROCESSING---"
 python preprocess.py
-echo "--TRAINING--"
+echo "---TRAINING---"
 python train.py
-echo "--TESTING--"
+echo "---TESTING---"
 python test.py
