@@ -1,33 +1,37 @@
 import torch
 
-from models.model.transformer import Transformer
 import utils.data_utils as data_utils
 import utils.model_utils as model_utils
-from utils.bleu import get_bleu, idx_to_word
+from models.model.transformer import Transformer
 
 
-# Load config file
+
+print("Load config file...")
 config = data_utils.get_config("config.yml")
 
 for key, value in config.items():
     globals()[key] = value
 
-checkpoint_fpath = "/".join([checkpoint["dir"], checkpoint["name"]])
 
-envi_vocab = torch.load(path["parallel_vocab"])
-dataloaders = torch.load(path["dataloaders"])
+print("Ensure directory and load file paths...")
+checkpoint_fpath = "/".join([checkpoint["dir"], checkpoint["name"]])
+vocab_fpath = "/".join([checkpoint["dir"], checkpoint["parallel_vocab"]])
+dataloaders_fpath = "/".join([checkpoint["dir"], checkpoint["dataloaders"]])
+
+envi_vocab = torch.load(vocab_fpath)
+dataloaders = torch.load(dataloaders_fpath)
 test_loader = dataloaders["test_loader"]
 
 
-# Load model
+print("Load model...")
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 enc_voc_size = len(envi_vocab.src)
 dec_voc_size = len(envi_vocab.tgt)
 
 model = Transformer(src_pad_idx=envi_vocab.src.pad_id,
-                    trg_pad_idx=envi_vocab.tgt.pad_id,
-                    trg_sos_idx=envi_vocab.tgt.bos_id,
+                    tgt_pad_idx=envi_vocab.tgt.pad_id,
+                    tgt_sos_idx=envi_vocab.tgt.bos_id,
                     d_model=d_model,
                     enc_voc_size=enc_voc_size,
                     dec_voc_size=dec_voc_size,
@@ -38,45 +42,14 @@ model = Transformer(src_pad_idx=envi_vocab.src.pad_id,
                     drop_prob=0.00,
                     device=device).to(device)
 
+
+print("Load checkpoint...")
 checkpoint_dict = torch.load(checkpoint_fpath)
 model.load_state_dict(checkpoint_dict["model_state_dict"])
 
 print(f'The model has {model_utils.count_parameters(model):,} trainable parameters')
 
 
-def test_model(parallel_vocab):
-    iterator = test_loader
-
-    with torch.no_grad():
-        batch_bleu = []
-        for i, batch in enumerate(iterator):
-            src = batch["src"].to(device)
-            trg = batch["tgt"].to(device)
-            output = model(src, trg[:, :-1])
-
-            total_bleu = []
-            for j in range(batch["tgt"].shape[0]):
-                src_words = idx_to_word(src[j], parallel_vocab.src)
-                trg_words = idx_to_word(trg[j], parallel_vocab.tgt)
-
-                output_words = output[j].max(dim=1)[1]
-                output_words = idx_to_word(output_words, parallel_vocab.tgt)
-
-                print('source :', src_words)
-                print('target :', trg_words)
-                print('predicted :', output_words)
-                print()
-                bleu = get_bleu(hypotheses=output_words.split(), reference=trg_words.split())
-                total_bleu.append(bleu)
-
-
-            total_bleu = sum(total_bleu) / len(total_bleu)
-            print('BLEU SCORE = {}'.format(total_bleu))
-            batch_bleu.append(total_bleu)
-
-        batch_bleu = sum(batch_bleu) / len(batch_bleu)
-        print('TOTAL BLEU SCORE = {}'.format(batch_bleu))
-
-
-if __name__ == '__main__':
-    test_model(envi_vocab)
+print("Start testing...")
+model_utils.test(model, test_loader, envi_vocab)
+print("Finish testing!")

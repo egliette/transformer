@@ -5,7 +5,7 @@ from dataset import ParallelDataset
 from tokenizer import EnTokenizer, ViTokenizer
 from vocabulary import Vocabulary, ParallelVocabulary
 import utils.data_utils as data_utils
-from utils.utils import create_dir
+from utils.other_utils import create_dir
 
 
 

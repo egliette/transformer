@@ -27,12 +27,12 @@ class Decoder(nn.Module):
 
         self.linear = nn.Linear(d_model, dec_voc_size)
 
-    def forward(self, trg, enc_src, trg_mask, src_mask):
-        trg = self.emb(trg)
+    def forward(self, tgt, enc_src, tgt_mask, src_mask):
+        tgt = self.emb(tgt)
 
         for layer in self.layers:
-            trg = layer(trg, enc_src, trg_mask, src_mask)
+            tgt = layer(tgt, enc_src, tgt_mask, src_mask)
 
         # pass to LM head
-        output = self.linear(trg)
+        output = self.linear(tgt)
         return output
