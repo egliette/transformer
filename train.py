@@ -57,9 +57,9 @@ optimizer = Adam(params=model.parameters(),
                 eps=adam_eps)
 
 scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer=optimizer,
-                                                verbose=True,
-                                                factor=factor,
-                                                patience=patience)
+                                                 verbose=True,
+                                                 factor=factor,
+                                                 patience=patience)
 
 criterion = nn.CrossEntropyLoss(ignore_index=envi_vocab.src.pad_id)
 
@@ -95,7 +95,7 @@ for epoch in range(begin_epoch, total_epoch+1):
         epoch_mins, epoch_secs = timer.get_time()
 
     if epoch > warmup:
-        scheduler.epoch(valid_loss)
+        scheduler.step(valid_loss)
 
     results_df.loc[len(results_df), columns] = epoch, train_loss, valid_loss, valid_BLEU
     results_df.to_csv(results_fpath, index=False)

@@ -1,8 +1,3 @@
-"""
-@author : Hyunwoong
-@when : 2019-12-22
-@homepage : https://github.com/gusdnd852
-"""
 import math
 from collections import Counter
 
@@ -11,7 +6,7 @@ import numpy as np
 
 def bleu_stats(hypothesis, reference):
     """Compute statistics for BLEU."""
-    stats = []
+    stats = list()
     stats.append(len(hypothesis))
     stats.append(len(reference))
     for n in range(1, 5):
