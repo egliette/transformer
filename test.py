@@ -7,7 +7,6 @@ from models.model.transformer import Transformer
 
 print("Load config file...")
 config = data_utils.get_config("config.yml")
-
 for key, value in config.items():
     globals()[key] = value
 

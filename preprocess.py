@@ -10,9 +10,9 @@ import utils.other_utils as other_utils
 
 print("Load config file...")
 config = data_utils.get_config("config.yml")
-
 for key, value in config.items():
     globals()[key] = value
+
 
 print("Ensure directory and load file paths...")
 other_utils.create_dir(checkpoint["dir"])
@@ -39,7 +39,7 @@ else:
 if other_utils.exist(dataloaders_fpath):
     print("Dataloaders exist, skip creating...")
 else:
-    print("Load datasets")
+    print("Load datasets...")
     train_set = ParallelDataset(path["src"]["train"], path["tgt"]["train"],
                                 parallel_vocab=envi_vocab)
     valid_set = ParallelDataset(path["src"]["valid"], path["tgt"]["valid"],
@@ -47,7 +47,7 @@ else:
     test_set = ParallelDataset(path["src"]["test"], path["tgt"]["test"],
                                parallel_vocab=envi_vocab)
 
-    print("Load dataloaders")
+    print("Load dataloaders...")
     train_loader = DataLoader(train_set,
                             batch_size=batch_size,
                             shuffle=True,

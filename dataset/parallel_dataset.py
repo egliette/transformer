@@ -36,5 +36,6 @@ class ParallelDataset(Dataset):
     def tokenize_pair(self, id):
         src = self.parallel_vocab.tokenize_corpus([self.src_sents[id]])
         src = ["<s>"] + src[0] + ["</s>"]
-        tgt = self.parallel_vocab.tokenize_corpus([self.tgt_sents[id]], is_source=False)[0]
+        tgt = self.parallel_vocab.tokenize_corpus([self.tgt_sents[id]], is_source=False)
+        tgt = ["<s>"] + tgt[0] + ["</s>"]
         return {"src": src, "tgt": tgt}

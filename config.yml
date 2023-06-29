@@ -3,7 +3,6 @@ path:
         train: "parallel_corpora/train.en"
         valid: "parallel_corpora/valid.en"
         test: "parallel_corpora/test.en"
-
     tgt:
         train: "parallel_corpora/train.vi"
         valid: "parallel_corpora/valid.vi"
@@ -15,7 +14,6 @@ checkpoint:
     results: "results.csv"
     parallel_vocab: "parallel_vocab.pt" 
     dataloaders: "dataloaders.pt"
-
 
 batch_size: 32
 total_epoch: 3
