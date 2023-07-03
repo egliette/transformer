@@ -10,7 +10,8 @@ path:
 
 checkpoint:
     dir: "checkpoint"
-    name: "checkpoint_best.pt"
+    best: "checkpoint_best.pt"
+    last: "checkpoint_last.pt"
     results: "results.csv"
     parallel_vocab: "parallel_vocab.pt" 
     dataloaders: "dataloaders.pt"
@@ -25,7 +26,7 @@ clip: 1.0
 # model architecture
 d_model: 512
 max_len: 256
-ffn_hidden: 2048
+ffn_hidden: 1024
 n_heads: 8
 n_layers: 6
 drop_prob: 0.1

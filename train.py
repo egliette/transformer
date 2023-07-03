@@ -19,7 +19,8 @@ for key, value in config.items():
 
 print("Ensure directory and load file paths...")
 other_utils.create_dir(checkpoint["dir"])
-checkpoint_fpath = "/".join([checkpoint["dir"], checkpoint["name"]])
+best_checkpoint_fpath = "/".join([checkpoint["dir"], checkpoint["best"]])
+last_checkpoint_fpath = "/".join([checkpoint["dir"], checkpoint["last"]])
 results_fpath = "/".join([checkpoint["dir"], checkpoint["results"]])
 vocab_fpath = "/".join([checkpoint["dir"], checkpoint["parallel_vocab"]])
 dataloaders_fpath = "/".join([checkpoint["dir"], checkpoint["dataloaders"]])
@@ -67,16 +68,16 @@ criterion = nn.CrossEntropyLoss(ignore_index=envi_vocab.src.pad_id)
 print("Load checkpoint...")
 begin_epoch = 1
 best_loss = float("inf")
-if other_utils.exist(checkpoint_fpath):
-    checkpoint_dict = torch.load(checkpoint_fpath)
+if other_utils.exist(last_checkpoint_fpath):
+    checkpoint_dict = torch.load(last_checkpoint_fpath)
     best_loss = checkpoint_dict["loss"]
     begin_epoch = checkpoint_dict["epoch"] + 1
     model.load_state_dict(checkpoint_dict["model_state_dict"])
     optimizer.load_state_dict(checkpoint_dict["optimizer_state_dict"])
     if begin_epoch <= total_epoch:
-        print(f"Continue from epoch {begin_epoch}...")
+        print(f"Continue from the last epoch {begin_epoch}...")
 else:
-    print(f"Checkpoint is not found, continue from epoch 1...")
+    print(f"Last checkpoint is not found, continue from epoch 1...")
     model.apply(model_utils.initialize_weights)
 
 print(f"The model has {model_utils.count_parameters(model):,} trainable parameters")
@@ -106,7 +107,13 @@ for epoch in range(begin_epoch, total_epoch+1):
                     "loss": best_loss,
                     "model_state_dict": model.state_dict(),
                     "optimizer_state_dict": optimizer.state_dict()},
-                    checkpoint_fpath)
+                    best_checkpoint_fpath)
+        
+    torch.save({"epoch": epoch,
+                "loss": best_loss,
+                "model_state_dict": model.state_dict(),
+                "optimizer_state_dict": optimizer.state_dict()},
+                last_checkpoint_fpath)
 
     print(f"Epoch: {epoch} | Time: {epoch_mins}m {epoch_secs}s")
     print(f"\tTrain Loss: {train_loss:.3f} | Train PPL: {math.exp(train_loss):7.3f}")
