@@ -12,7 +12,7 @@ for key, value in config.items():
 
 
 print("Ensure directory and load file paths...")
-checkpoint_fpath = "/".join([checkpoint["dir"], checkpoint["name"]])
+checkpoint_fpath = "/".join([checkpoint["dir"], checkpoint["best"]])
 vocab_fpath = "/".join([checkpoint["dir"], checkpoint["parallel_vocab"]])
 dataloaders_fpath = "/".join([checkpoint["dir"], checkpoint["dataloaders"]])
 
