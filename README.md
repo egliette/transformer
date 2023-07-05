@@ -1,6 +1,10 @@
-# English-Vietnamese Neural Machine Translation pipeline
+# English-Vietnamese - Attention Is All You Need
 
-in progress...
+Run the follow command to create parallel vocabulary, dataloaders, train and test the model according to `config.yml`.
+
+```bash
+bash full_pipeline.sh
+```
 
 ## Reference
 - [PyTorch Implementation of "Attention Is All You Need"](https://github.com/hyunwoongko/transformer)
