@@ -2,9 +2,7 @@ from itertools import chain
 from collections import Counter
 
 import torch
-from tqdm import tqdm
 
-from utils.data_utils import pad_tensor
 
 class Vocabulary:
     """ The Vocabulary class heavily inspired by machine translation exercise of
@@ -53,21 +51,19 @@ class Vocabulary:
         else:
             return self[word]
 
-    def tokenize_corpus(self, corpus, silent=True):
+    def tokenize_corpus(self, corpus):
         """Split the documents of the corpus into words
         @param corpus (list(str)): list of documents
         @return tokenized_corpus (list(list(str))): list of words
         """
-        if not silent:
-          print("Tokenize the corpus...")
         tokenized_corpus = list()
-        for document in tqdm(corpus, disable=silent,):
-            tokenized_document = [word.replace(" ", "_") for word in self.tokenizer.tokenize(document)]
+        for document in corpus:
+            tokenized_document = self.tokenizer.tokenize(document)
             tokenized_corpus.append(tokenized_document)
 
         return tokenized_corpus
 
-    def corpus_to_tensor(self, corpus, is_tokenized=False, silent=True):
+    def corpus_to_tensor(self, corpus, is_tokenized=False):
         """ Convert corpus to a list of indices tensor
         @param corpus (list(str) if is_tokenized==False else list(list(str)))
         @param is_tokenized (bool)
@@ -78,34 +74,37 @@ class Vocabulary:
         else:
             tokenized_corpus = self.tokenize_corpus(corpus)
         indicies_corpus = list()
-        for document in tqdm(tokenized_corpus, disable=silent):
+        for document in tokenized_corpus:
             indicies_document = torch.tensor(list(map(lambda word: self[word], document)),
                                              dtype=torch.int64)
             indicies_corpus.append(indicies_document)
 
         return indicies_corpus
 
-    def tensor_to_corpus(self, tensor, silent=True):
+    def tensor_to_corpus(self, tensor):
         """ Convert list of indices tensor to a list of tokenized documents
         @param indicies_corpus (list(tensor))
         @return corpus (list(list(str)))
         """
         corpus = list()
-        for indicies in tqdm(tensor, disable=silent):
+        for indicies in tensor:
             document = list(map(lambda index: self.id2word[index.item()], indicies))
             corpus.append(document)
 
         return corpus
 
     def add_words_from_corpus(self, corpus=None, corpus_fpath=None,
-                              is_tokenized=False, min_freq=1):
+                              is_tokenized=False, min_freq=1, lowercase=False):
         print("Add tokens from the corpus...")
 
         if corpus_fpath is not None:
             corpus = list()
             with open(corpus_fpath, "r", encoding="utf-8") as f:
                 for line in f:
-                    corpus.append(line.rstrip("\n"))
+                    if lowercase:
+                        corpus.append(line.rstrip("\n").lower())
+                    else:
+                        corpus.append(line.rstrip("\n"))
 
         if is_tokenized:
             tokenized_corpus = corpus
@@ -143,12 +142,3 @@ class ParallelVocabulary:
             return self.src.tensor_to_corpus(tensor)
         else:
             return self.tgt.tensor_to_corpus(tensor)
-
-    def collate_fn(self, examples):
-        src_sents = [pair["src"] for pair in examples]
-        processed_src = self.corpus_to_tensor(src_sents, is_tokenized=True)
-        tgt_sents = [pair["tgt"] for pair in examples]
-        processed_tgt = self.corpus_to_tensor(tgt_sents, is_tokenized=True, is_source=False)
-
-        return {"src": pad_tensor(processed_src, self.src.pad_id),
-                "tgt": pad_tensor(processed_tgt, self.tgt.pad_id)}

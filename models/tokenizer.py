@@ -1,9 +1,11 @@
-from abc import ABC, abstractmethod
-
-import underthesea
 import nltk
+from pyvi import ViTokenizer as PyViTokenizer
 
-nltk.download('punkt')
+
+try:
+    nltk.data.find('tokenizers/punkt')
+except LookupError:
+    nltk.download('punkt')
 
 
 class BaseTokenizer(ABC):
@@ -16,7 +18,10 @@ class BaseTokenizer(ABC):
 class ViTokenizer(BaseTokenizer):
 
     def tokenize(self, sentence):
-        return underthesea.word_tokenize(sentence)
+        if len(sentence) == 0:
+            return list()
+        else:
+            return PyViTokenizer.spacy_tokenize(sentence)[0]
 
 
 class EnTokenizer(BaseTokenizer):
