@@ -1,3 +1,5 @@
+from abc import ABC, abstractmethod
+
 import nltk
 from pyvi import ViTokenizer as PyViTokenizer
 
